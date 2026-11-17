@@ -30,9 +30,11 @@ class Files:
 class SourceGraphs(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.seed = {name: subprocess.check_output(["git", "-c", "safe.directory=" + str(PROJECT),
-                                                  "show", ORIGINAL + ":" + name], cwd=PROJECT)
-                    for name in audit._SOURCE_REQUIRED}
+        # Squashed main-only clones do not retain the original feature-branch
+        # commit. Its exact source bytes are already tracked in the evidence
+        # snapshot; the tests construct their own Git ancestry below.
+        snapshot = PROJECT / "reports/acceptance/t18/raw/historical" / ORIGINAL / "files"
+        cls.seed = {name: (snapshot / name).read_bytes() for name in audit._SOURCE_REQUIRED}
         cls.current = {name: (PROJECT / name).read_bytes() for name in ("tests/e2e/audit.py", "tests/e2e/driver.py")}
 
     def setUp(self):
